@@ -1,12 +1,24 @@
 import os
 import argparse
 from PIL import Image
+from rich.console import Console
+from rich.theme import Theme
+
+custom_theme = Theme({
+    "info": "dim cyan",
+    "warning": "magenta",
+    "danger": "bold red",
+    "success": "bright_green",
+})
+console = Console(theme=custom_theme)
 
 
 def convert_to_png(source, destination=""):
     """
     converts an image into a png
     """
+    # print(os.path.abspath(source))
+    source = os.path.abspath(source)
     if os.path.isfile(source):
         directory = os.path.dirname(source)
         file_name = os.path.basename(source)
@@ -14,38 +26,67 @@ def convert_to_png(source, destination=""):
         file_name[1] = '.png'
         file_name = "".join(file_name)
         
-        img = Image.open(source)
+        try:
+            img = Image.open(source)
+        except:
+             console.print("There was an error trying to open the image", style="danger")
+             return
         if destination != "" and os.path.isdir(destination):
-            img.save(os.path.join(destination, file_name), "PNG" )
-            return "image converted successfully with new destination directory"
+            try:
+                img.save(os.path.join(destination, file_name), "PNG" )
+            except:
+                console.print("There was an error converrting the image to a PNG", style="danger")
+                
+            console.print("image converted successfully with new destination directory", style="success")
         elif destination == "":
-            img.save(os.path.join(directory, file_name), "PNG" )
-            return "Image converted successfully"
+            try:
+                img.save(os.path.join(directory, file_name), "PNG" )
+            except:
+                console.print("There was an error converting the image to a PNG", style="danger")
+                
+            console.print("Image converted successfully", style="success")
         else:
-            return "Please provide a valid destination directory"
+            console.print("Please provide a valid destination directory", style="danger")
     else:
-        return "Please provide a valid path to your image"
+         console.print("Please provide a valid path to your image", style="danger")
+         return
+
 
 
 def convert_to_jpg(source, destination=""):
     """
     converts an image into a jpg
     """
+    source = os.path.abspath(source)
     if os.path.isfile(source):
         directory = os.path.dirname(source)
         file_name = os.path.basename(source)
         file_name = file_name.split(".")
         file_name[1] = '.jpg'
         file_name = "".join(file_name)
-        img = Image.open(source)
+        try:
+            img = Image.open(source)
+        except:
+            console.print("There was an error trying to open the image", style="danger")
+            return
         if destination != "" and os.path.isdir(destination):
-            img.save(os.path.join(destination, file_name), "JPG")
+            try:
+                img.save(os.path.join(destination, file_name), "JPG")
+            except:
+                console.print("There was an error converrting the image to a JPG", style="danger")
+                return
         elif destination == "":
-            img.save(os.path.join(directory, file_name), "JPG" )
+            try:
+                img.save(os.path.join(directory, file_name), "JPG" )
+            except:
+                console.print("There was an error converrting the image to a JPG", style="danger")
+                return
         else:
-            return "Please provide a valid destination directory"
+            console.print("Please provide a valid destination directory", style="danger")
+            return
     else:
-        return "Please provide a valid path to your image"
+        console.print("Please provide a valid path to your image", style="danger")
+        return
 
 
 def personal():
@@ -82,20 +123,17 @@ def personal():
     )
 
     args = parser.parse_args()
-    print(args.commands)
     if args.commands == "convert":
         length = len(args.file_paths)
-        # print(args.file_paths)
-        # print(args)
 
         if length <= 2:
             if length == 2:
                 if args.jpg:
                     source, destination = args.file_paths
-                    print(convert_to_jpg(source, destination))
+                    convert_to_jpg(source, destination)
                 elif args.png:
                     source, destination = args.file_paths
-                    print(convert_to_png(source, destination))
+                    convert_to_png(source, destination)
                 else:
                     print(
                         "Please indicate whether you want to convert to a jpg with -j(or --jpg) or to a png with -p(or --png)"
@@ -103,9 +141,9 @@ def personal():
             else:
                 source = args.file_paths[0]
                 if args.jpg:
-                    print(convert_to_jpg(source))
+                    convert_to_jpg(source)
                 elif args.png:
-                    print(convert_to_png(source))
+                    convert_to_png(source)
                 else:
                     print(
                         "Please indicate whether you want to convert to a jpg with -j(or --jpg) or to a png with -p(or --png)"
