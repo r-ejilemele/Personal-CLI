@@ -135,8 +135,8 @@ def personal():
                     source, destination = args.file_paths
                     convert_to_png(source, destination)
                 else:
-                    print(
-                        "Please indicate whether you want to convert to a jpg with -j(or --jpg) or to a png with -p(or --png)"
+                    console.print(
+                        "Please indicate whether you want to convert to a jpg with -j(or --jpg) or to a png with -p(or --png)", style="danger"
                     )
             else:
                 source = args.file_paths[0]
@@ -145,11 +145,11 @@ def personal():
                 elif args.png:
                     convert_to_png(source)
                 else:
-                    print(
-                        "Please indicate whether you want to convert to a jpg with -j(or --jpg) or to a png with -p(or --png)"
+                    console.print(
+                        "Please indicate whether you want to convert to a jpg with -j(or --jpg) or to a png with -p(or --png)", style="danger"
                     )
         else:
-            print("The number of arguments given was too many")
+            console.print("The number of arguments given was too many", style="danger")
 
 
 if __name__ == "__main__":
