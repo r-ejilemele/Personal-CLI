@@ -26,7 +26,7 @@ def gather(source):
                     os.rename(os.path.join(source, file_name), os.path.join(new_dir_path, file_name))
             console.print("All files moved successfully!", style="success")
         except:
-            consle.print("There was an error moving a file", style= "danger")
+            console.print("There was an error moving a file", style= "danger")
     else:
         console.print("This directory does not exist", style="danger")
 
