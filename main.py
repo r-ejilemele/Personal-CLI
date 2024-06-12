@@ -16,6 +16,9 @@ console = Console(theme=custom_theme)
 
 
 def gather(source):
+    """
+    Gathers all JPGs into in a directory into a folder
+    """
     if os.path.isdir(source):
         new_dir_path = os.path.join(source, "JPGs")
         os.makedirs(os.path.join(source, "JPGs"))
@@ -23,12 +26,16 @@ def gather(source):
             for file in os.listdir(source):
                 if os.path.splitext(file)[1].lower() == ".jpg":
                     file_name = os.path.basename(file)
-                    os.rename(os.path.join(source, file_name), os.path.join(new_dir_path, file_name))
+                    os.rename(
+                        os.path.join(source, file_name),
+                        os.path.join(new_dir_path, file_name),
+                    )
             console.print("All files moved successfully!", style="success")
         except:
-            console.print("There was an error moving a file", style= "danger")
+            console.print("There was an error moving a file", style="danger")
     else:
         console.print("This directory does not exist", style="danger")
+
 
 def convert_to_png(source, destination=""):
     """
@@ -122,8 +129,10 @@ def convert_to_jpg(source, destination=""):
 
 def personal():
     """
-    asdf,
-    adsfasdf
+    The main body of the personal CLI
+
+    This is where all the parse arguments and parsers
+        are added
     """
     parser = argparse.ArgumentParser(description="Process some integers.")
     subparsers = parser.add_subparsers(dest="commands")
@@ -132,9 +141,7 @@ def personal():
     convert_subparser = subparsers.add_parser(
         name="convert", help="convert an image into another format"
     )
-    convert_subparser.add_argument(
-        "file_paths", type=str, nargs="*", help=""
-    )
+    convert_subparser.add_argument("file_paths", type=str, nargs="*", help="")
     convert_subparser_mutually_exclusive = (
         convert_subparser.add_mutually_exclusive_group()
     )
@@ -158,7 +165,11 @@ def personal():
         name="gather", help="gather all the JPGs in a directory into one folder"
     )
 
-    gather_subparser.add_argument("file_path",type=str, nargs='?', )
+    gather_subparser.add_argument(
+        "file_path",
+        type=str,
+        nargs="?",
+    )
 
     args = parser.parse_args()
     if args.commands == "convert":
