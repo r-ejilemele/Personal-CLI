@@ -1,8 +1,12 @@
 import os
 import argparse
+import time
 from PIL import Image
 from rich.console import Console
 from rich.theme import Theme
+from rich.progress import track
+from rich.progress import Progress
+import psutil 
 
 custom_theme = Theme(
     {
@@ -14,6 +18,24 @@ custom_theme = Theme(
 )
 console = Console(theme=custom_theme)
 
+
+
+def battery():
+    # returns a tuple 
+
+    laptop_battery = psutil.sensors_battery()
+    battery_percentage = laptop_battery.percent
+
+
+    with Progress() as progress:
+
+        task1 = progress.add_task("[green]Battery Percentage", total=100)
+
+        while not progress.finished:
+            progress.update(task1, advance=battery_percentage)
+            break
+            
+    print(battery_percentage)
 
 def gather(source):
     """
@@ -171,6 +193,11 @@ def personal():
         nargs="?",
     )
 
+        #battery subparse
+    battery_subparser = subparsers.add_parser(
+        name="battery", help="convert an image into another format"
+    )
+
     args = parser.parse_args()
     if args.commands == "convert":
         length = len(args.file_paths)
@@ -203,6 +230,8 @@ def personal():
             console.print("The number of arguments given was too many", style="danger")
     elif args.commands == "gather":
         gather(args.file_path)
+    elif args.commands == "battery":
+        battery()
 
 
 if __name__ == "__main__":
