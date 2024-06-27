@@ -2,6 +2,7 @@ import os
 import argparse
 import winreg as reg
 import ctypes
+from ctypes import wintypes
 from PIL import Image
 from rich.console import Console
 from rich.theme import Theme
@@ -20,18 +21,60 @@ custom_theme = Theme(
 console = Console(theme=custom_theme)
 
 
+class SHQUERYRBINFO(ctypes.Structure):
+    _fields_ = [
+        ("cbSize", wintypes.ULONG),
+        ("i64Size", ctypes.c_longlong),
+        ("i64NumItems", ctypes.c_longlong),
+    ]
+
+
+def is_trash_empty():
+    # recycle_bin_path = "C:\\$Recycle.Bin"
+    # content = os.listdir(recycle_bin_path)
+    # print(content)
+    # return len(content) == 0
+    # Load necessary Windows DLLs
+    shell = ctypes.windll.shell32
+    ole32 = ctypes.windll.ole32
+
+    info = SHQUERYRBINFO()
+    info.cbSize = ctypes.sizeof(info)
+
+    # Initialize COM library
+    ole32.CoInitialize(0)
+
+    try:
+        result = shell.SHQueryRecycleBinW(None, ctypes.byref(info))
+        if result == 0:
+            return info.i64NumItems == 0
+        else:
+            console.print(f"The error {result} occurred.", style="danger")
+            return False
+    except Exception as e:
+        console.print("There was an error checking if the trash was empty", style="danger")
+    finally:
+        # Uninitialize COM library
+        ole32.CoUninitialize()
+
+
 def empty_trash():
     # Define constants from the Windows API
-    SHEmptyRecycleBin = ctypes.windll.shell32.SHEmptyRecycleBinW
-    bin_flags = 0  # 0 for all items in recycle bin, or use appropriate flags
-
-    # Call the Windows API function to empty the recycle bin
-    result = SHEmptyRecycleBin(None, None, bin_flags)
-
-    if result == 0:
-        console.print("Recycle bin emptied successfully.", style="success")
+    if is_trash_empty():
+        console.print("The trash is already empty", style="success")
     else:
-        console.print(f"Failed to empty recycle bin. Error code:\n {result}", style="danger")
+        SHEmptyRecycleBin = ctypes.windll.shell32.SHEmptyRecycleBinW
+        bin_flags = 0  # 0 for all items in recycle bin, or use appropriate flags
+
+        # Call the Windows API function to empty the recycle bin
+        result = SHEmptyRecycleBin(None, None, bin_flags)
+
+        if result == 0:
+            console.print("Recycle bin emptied successfully.", style="success")
+        else:
+            console.print(
+                f"Failed to empty recycle bin. Error code:\n {result}", style="danger"
+            )
 
 
 def get_dark_mode():
@@ -189,14 +232,17 @@ def convert_to_jpg(source, destination=""):
         try:
             img = Image.open(source)
         except Exception as e:
-            console.print(f"There was an error trying to open the image: \n {e}", style="danger")
+            console.print(
+                f"There was an error trying to open the image: \n {e}", style="danger"
+            )
             return
         if destination != "" and os.path.isdir(destination):
             try:
                 img.save(os.path.join(destination, file_name), "JPG")
             except Exception as e:
                 console.print(
-                    f"There was an error saving the image as a JPG: \n {e}", style="danger"
+                    f"There was an error saving the image as a JPG: \n {e}",
+                    style="danger",
                 )
                 return
         elif destination == "":
@@ -310,7 +356,6 @@ def personal():
         toggle_dark()
     elif args.commands == "empty":
         empty_trash()
-
 
 if __name__ == "__main__":
     """
