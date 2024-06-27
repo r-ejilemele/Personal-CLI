@@ -1,12 +1,13 @@
 import os
 import argparse
-import time
+import winreg as reg
+import ctypes
 from PIL import Image
 from rich.console import Console
 from rich.theme import Theme
 from rich.progress import track
-from rich.progress import Progress
-import psutil 
+from rich.progress import Progress, TextColumn, BarColumn
+import psutil
 
 custom_theme = Theme(
     {
@@ -19,23 +20,87 @@ custom_theme = Theme(
 console = Console(theme=custom_theme)
 
 
+def empty_trash():
+    # Define constants from the Windows API
+    SHEmptyRecycleBin = ctypes.windll.shell32.SHEmptyRecycleBinW
+    bin_flags = 0  # 0 for all items in recycle bin, or use appropriate flags
+
+    # Call the Windows API function to empty the recycle bin
+    result = SHEmptyRecycleBin(None, None, bin_flags)
+
+    if result == 0:
+        console.print("Recycle bin emptied successfully.", style="success")
+    else:
+        console.print(f"Failed to empty recycle bin. Error code:\n {result}", style="danger")
+
+
+def get_dark_mode():
+    key_path = r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+    value_name = "AppsUseLightTheme"
+
+    try:
+        registry_key = reg.OpenKey(reg.HKEY_CURRENT_USER, key_path, 0, reg.KEY_READ)
+
+        value, _ = reg.QueryValueEx(registry_key, value_name)
+
+        reg.CloseKey(registry_key)
+
+        dark_mode = value == 0
+        return dark_mode
+
+    except Exception as e:
+        console.print(f"Failed to get dark mode:\n {e}", style="danger")
+        return None
+
+
+def toggle_dark():
+    key_path = r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+    value_name = "AppsUseLightTheme"
+    current_mode = get_dark_mode()
+    if current_mode is not None:
+        try:
+            registry_key = reg.OpenKey(
+                reg.HKEY_CURRENT_USER, key_path, 0, reg.KEY_WRITE
+            )
+            reg.SetValueEx(
+                registry_key,
+                value_name,
+                0,
+                reg.REG_DWORD,
+                0 if int(not (current_mode)) else 1,
+            )
+            reg.CloseKey(registry_key)
+            console.print(
+                f"Set {'dark' if int(not(current_mode)) else 'light'} mode successfully.",
+                style="success",
+            )
+        except Exception as e:
+            console.print(f"Failed to set dark mode: {e}", style="danger")
+    else:
+        console.print(
+            "There was an error retrieving dark mode status from the system",
+            style="danger",
+        )
+
 
 def battery():
-    # returns a tuple 
+    # returns a tuple
 
     laptop_battery = psutil.sensors_battery()
     battery_percentage = laptop_battery.percent
 
+    with Progress(
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(complete_style="green"),
+        TextColumn("[green]{task.percentage:>3.0f}%"),
+    ) as progress:
 
-    with Progress() as progress:
-
-        task1 = progress.add_task("[green]Battery Percentage", total=100)
+        task1 = progress.add_task("[blue]Battery Percentage", total=100)
 
         while not progress.finished:
             progress.update(task1, advance=battery_percentage)
             break
-            
-    print(battery_percentage)
+
 
 def gather(source):
     """
@@ -53,8 +118,8 @@ def gather(source):
                         os.path.join(new_dir_path, file_name),
                     )
             console.print("All files moved successfully!", style="success")
-        except:
-            console.print("There was an error moving a file", style="danger")
+        except Exception as e:
+            console.print(f"There was an error moving a file, \n {e}", style="danger")
     else:
         console.print("This directory does not exist", style="danger")
 
@@ -74,15 +139,18 @@ def convert_to_png(source, destination=""):
 
         try:
             img = Image.open(source)
-        except:
-            console.print("There was an error trying to open the image", style="danger")
+        except Exception as e:
+            console.print(
+                f"There was an error trying to open the image: \n {e}", style="danger"
+            )
             return
         if destination != "" and os.path.isdir(destination):
             try:
                 img.save(os.path.join(destination, file_name), "PNG")
-            except:
+            except Exception as e:
                 console.print(
-                    "There was an error converrting the image to a PNG", style="danger"
+                    f"There was an error saving the image as a PNG: \n {e}",
+                    style="danger",
                 )
 
             console.print(
@@ -92,9 +160,9 @@ def convert_to_png(source, destination=""):
         elif destination == "":
             try:
                 img.save(os.path.join(directory, file_name), "PNG")
-            except:
+            except Exception as e:
                 console.print(
-                    "There was an error converting the image to a PNG", style="danger"
+                    f"There was an error saving the image as a PNG: {e}", style="danger"
                 )
 
             console.print("Image converted successfully", style="success")
@@ -120,23 +188,23 @@ def convert_to_jpg(source, destination=""):
         file_name = "".join(file_name)
         try:
             img = Image.open(source)
-        except:
-            console.print("There was an error trying to open the image", style="danger")
+        except Exception as e:
+            console.print(f"There was an error trying to open the image: \n {e}", style="danger")
             return
         if destination != "" and os.path.isdir(destination):
             try:
                 img.save(os.path.join(destination, file_name), "JPG")
-            except:
+            except Exception as e:
                 console.print(
-                    "There was an error converrting the image to a JPG", style="danger"
+                    f"There was an error saving the image as a JPG: \n {e}", style="danger"
                 )
                 return
         elif destination == "":
             try:
                 img.save(os.path.join(directory, file_name), "JPG")
-            except:
+            except Exception as e:
                 console.print(
-                    "There was an error converrting the image to a JPG", style="danger"
+                    f"There was an error saving the image as a JPG: {e}", style="danger"
                 )
                 return
         else:
@@ -193,9 +261,15 @@ def personal():
         nargs="?",
     )
 
-        #battery subparse
+    # battery subparse
     battery_subparser = subparsers.add_parser(
         name="battery", help="convert an image into another format"
+    )
+    dark_subparser = subparsers.add_parser(
+        name="dark", help="toggle dark mode for my computer"
+    )
+    empty_trash_subparser = subparsers.add_parser(
+        name="empty", help="toggle dark mode for my computer"
     )
 
     args = parser.parse_args()
@@ -232,6 +306,10 @@ def personal():
         gather(args.file_path)
     elif args.commands == "battery":
         battery()
+    elif args.commands == "dark":
+        toggle_dark()
+    elif args.commands == "empty":
+        empty_trash()
 
 
 if __name__ == "__main__":
