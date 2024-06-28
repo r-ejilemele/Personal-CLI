@@ -9,6 +9,7 @@ from rich.theme import Theme
 from rich.progress import track
 from rich.progress import Progress, TextColumn, BarColumn
 import psutil
+import scraper
 
 custom_theme = Theme(
     {
