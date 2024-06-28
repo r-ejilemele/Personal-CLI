@@ -3,8 +3,21 @@ from bs4 import BeautifulSoup
 from supabase import create_client, Client
 import os
 from dotenv import load_dotenv
+from rich.theme import Theme
+from rich.console import Console
+
+
 
 load_dotenv()
+custom_theme = Theme(
+    {
+        "info": "dim cyan",
+        "warning": "magenta",
+        "danger": "bold red",
+        "success": "bright_green",
+    }
+)
+console = Console(theme=custom_theme)
 
 
 def scrape_cnn():
@@ -51,20 +64,27 @@ def scrape_cnn():
     return articles
 
 
-def scraper():
+def scrape():
     url = os.getenv("SUPABASE_URL")
-    key = os.getenv("SUPABASE_KEY")
+    key = os.getenv("SUPABASE_ADMIN_KEY")
     supabase: Client = create_client(url, key)
-    email = os.getenv("SUPABASE_USER_EMAIL")
-    password = os.getenv("SUPABASE_USER_PASSWORD")
-    auth_user = supabase.auth.sign_in_with_password({"email":email, "password":password})
+    # auth_user = supabase.auth.sign_in_with_password({"email":email, "password":password})
     # access_token = auth_user['access_token']
     # refresh_token = auth_user['refresh_token']
-    response = (
-        supabase.table("articles").insert({"id": 3, "article_heading": "Denmark"}).execute()
-    )
-    print("Added successfully")
-    return
+
+    try:
+        for heading, link in scrape_cnn().items():
+            response = (
+                supabase.table("articles")
+                .insert({ "article_heading": heading, "article_url": link})
+                .execute()
+            )
+        # print("Insertion successful:", response)
+    except Exception as e:
+        console.print(f"Error: \n {e}", style="danger")
+    else:
+        console.print("The news was successfully retrieved and added to the database", style="success")
+
     # print(response.text)
     # print(url)
     # print(key)
@@ -72,4 +92,4 @@ def scraper():
 
 
 if __name__ == "__main__":
-    scraper()
+    scrape()

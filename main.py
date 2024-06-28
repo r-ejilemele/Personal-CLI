@@ -318,6 +318,9 @@ def personal():
     empty_trash_subparser = subparsers.add_parser(
         name="empty", help="toggle dark mode for my computer"
     )
+    scrape_for_news = subparsers.add_parser(
+        name="scrape", help="get most important news for the day"
+    )
 
     args = parser.parse_args()
     if args.commands == "convert":
@@ -357,6 +360,8 @@ def personal():
         toggle_dark()
     elif args.commands == "empty":
         empty_trash()
+    elif args.commands == "scrape":
+        scraper.scrape()
 
 if __name__ == "__main__":
     """
