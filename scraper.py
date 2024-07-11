@@ -99,12 +99,15 @@ def scrape():
 
     try:
         for heading, link in (scrape_cnn() | scrape_boston_herald()).items():
-            response = (
-                supabase.table("articles")
-                .insert({"article_heading": heading, "article_url": link})
-                .execute()
+            result = (
+                supabase.table("articles").select("*").eq("article_url", link).execute()
             )
-        # print("Insertion successful:", response)
+            if not result.data:
+                response = (
+                    supabase.table("articles")
+                    .insert({"article_heading": heading, "article_url": link})
+                    .execute()
+                )
     except Exception as e:
         console.print(f"Error: \n {e}", style="danger")
     else:
