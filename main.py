@@ -53,7 +53,9 @@ def is_trash_empty():
             console.print(f"The error {result} occurred.", style="danger")
             return False
     except Exception as e:
-        console.print("There was an error checking if the trash was empty", style="danger")
+        console.print(
+            "There was an error checking if the trash was empty", style="danger"
+        )
     finally:
         # Uninitialize COM library
         ole32.CoUninitialize()
@@ -262,6 +264,26 @@ def convert_to_jpg(source, destination=""):
     else:
         console.print("Please provide a valid path to your image", style="danger")
         return
+    
+def load_color_image(filename):
+    """
+    Loads a color image from the given file and returns a dictionary
+    representing that image.
+
+    Invoked as, for example:
+       i = load_color_image('test_images/cat.png')
+    """
+    with open(filename, "rb") as img_handle:
+        img = Image.open(img_handle)
+        img = img.convert("RGB")  # in case we were given a greyscale image
+        img_data = img.getdata()
+        pixels = list(img_data)
+        width, height = img.size
+        return {"height": height, "width": width, "pixels": pixels}
+    
+def compress(path):
+    print(load_color_image(path))
+    
 
 
 def personal():
@@ -321,6 +343,9 @@ def personal():
     scrape_for_news = subparsers.add_parser(
         name="scrape", help="get most important news for the day"
     )
+    compress_image = subparsers.add_parser(
+        name="compress", help="Compress an image using svd compression"
+    )
 
     args = parser.parse_args()
     if args.commands == "convert":
@@ -362,6 +387,7 @@ def personal():
         empty_trash()
     elif args.commands == "scrape":
         scraper.scrape()
+
 
 if __name__ == "__main__":
     """
