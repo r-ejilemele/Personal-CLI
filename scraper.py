@@ -89,16 +89,75 @@ def scrape_boston_herald():
     return articles
 
 
+def scrape_the_tech():
+    tech = requests.get("https://thetech.com/")
+    html = BeautifulSoup(tech.text, "lxml")
+    navbar = html.find("nav", class_="nameplate-nav")
+
+    pages = [
+        a.get("href")
+        for a in navbar.find("div", class_="nameplate-bottom").findAll("a")
+    ]
+    root = "https://thetech.com"
+    articles = dict()
+    for page in [p for p in pages if p not in {"/about", "/ads/", "/about/contact"}]:
+        page_html = BeautifulSoup(requests.get(root + page).text, "lxml")
+        container = page_html.find("div", class_="list-articles")
+        article = container.find("div", class_="list-article").find(
+            "div", class_="article-info"
+        )
+        link = article.find("h1").find("a")
+        articles[link.text.strip()] = root + link.get("href")
+    return articles
+
+
+def scrape_crimson():
+    crimson = requests.get("https://www.thecrimson.com/").text
+    html = BeautifulSoup(crimson, "lxml")
+    navbar = html.find("div", class_="navitems")
+    pages = []
+    root = "https://www.thecrimson.com"
+    for a in navbar.findAll("a"):
+        href = a.get("href")
+        text = a.text.strip()
+        if (
+            href
+            not in {
+                "mailto:managingeditor@thecrimson.com",
+                "/store",
+                "/section/features/",
+                "/subscribe/",
+                "/section/opinion/",
+                "/section/media/",
+                "/section/fm/",
+                "/flyby/",
+            }
+            and text != "Donate"
+        ):
+            pages.append(root + href)
+    articles = dict()
+    for page in pages:
+        page_html = BeautifulSoup(requests.get(page).text, "lxml")
+        article = page_html.find("div", class_="css-1w04wz2")
+        article = article.find("h1").find("a")
+        articles[article.text.strip()] = root + article.get("href")
+    return articles
+
+
 def scrape():
     url = os.getenv("SUPABASE_URL")
     key = os.getenv("SUPABASE_ADMIN_KEY")
     supabase: Client = create_client(url, key)
-    # auth_user = supabase.auth.sign_in_with_password({"email":email, "password":password})
-    # access_token = auth_user['access_token']
-    # refresh_token = auth_user['refresh_token']
+    # auth_user = supabase.auth.sign_in_with_password(
+    #     {"email": email, "password": password}
+    # )
+    # access_token = auth_user["access_token"]
+    # refresh_token = auth_user["refresh_token"]
 
     try:
-        for heading, link in (scrape_cnn() | scrape_boston_herald()).items():
+        for heading, link in (
+            scrape_cnn() | scrape_boston_herald() | scrape_the_tech() | scrape_crimson()
+        ).items():
             result = (
                 supabase.table("articles").select("*").eq("article_url", link).execute()
             )
