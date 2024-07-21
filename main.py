@@ -10,6 +10,7 @@ from rich.progress import track
 from rich.progress import Progress, TextColumn, BarColumn
 import psutil
 import scraper
+import compress
 
 custom_theme = Theme(
     {
@@ -281,8 +282,7 @@ def load_color_image(filename):
         width, height = img.size
         return {"height": height, "width": width, "pixels": pixels}
     
-def compress(path):
-    print(load_color_image(path))
+
     
 
 
@@ -346,6 +346,7 @@ def personal():
     compress_image = subparsers.add_parser(
         name="compress", help="Compress an image using svd compression"
     )
+    compress_image.add_argument("image_path", type=str, help="the file path to the image you want to compress")
 
     args = parser.parse_args()
     if args.commands == "convert":
@@ -387,6 +388,8 @@ def personal():
         empty_trash()
     elif args.commands == "scrape":
         scraper.scrape()
+    elif args.commands == "compress":
+        compress.compress(args.image_path)
 
 
 if __name__ == "__main__":
