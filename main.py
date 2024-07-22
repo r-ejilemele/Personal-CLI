@@ -242,19 +242,19 @@ def convert_to_jpg(source, destination=""):
             return
         if destination != "" and os.path.isdir(destination):
             try:
-                img.save(os.path.join(destination, file_name), "JPG")
+                img.save(os.path.join(destination, file_name), "JPEG")
             except Exception as e:
                 console.print(
-                    f"There was an error saving the image as a JPG: \n {e}",
+                    f"There was an error saving the image as a JPEG: \n {e}",
                     style="danger",
                 )
                 return
         elif destination == "":
             try:
-                img.save(os.path.join(directory, file_name), "JPG")
+                img.save(os.path.join(directory, file_name), "JPEG")
             except Exception as e:
                 console.print(
-                    f"There was an error saving the image as a JPG: {e}", style="danger"
+                    f"There was an error saving the image as a JPEG: {e}", style="danger"
                 )
                 return
         else:
@@ -265,7 +265,8 @@ def convert_to_jpg(source, destination=""):
     else:
         console.print("Please provide a valid path to your image", style="danger")
         return
-    
+
+
 def load_color_image(filename):
     """
     Loads a color image from the given file and returns a dictionary
@@ -281,9 +282,6 @@ def load_color_image(filename):
         pixels = list(img_data)
         width, height = img.size
         return {"height": height, "width": width, "pixels": pixels}
-    
-
-    
 
 
 def personal():
@@ -315,13 +313,13 @@ def personal():
         "-j",
         "--jpg",
         action="store_true",
-        help="convert an image into a JPG",
+        help="convert an image into a JPEG",
         default=False,
     )
 
     # gather subparser
     gather_subparser = subparsers.add_parser(
-        name="gather", help="gather all the JPGs in a directory into one folder"
+        name="gather", help="gather all the JPEGs in a directory into one folder"
     )
 
     gather_subparser.add_argument(
@@ -344,11 +342,37 @@ def personal():
         name="scrape", help="get most important news for the day"
     )
     compress_image = subparsers.add_parser(
-        name="compress", help="Compress an image using svd compression"
+        name="compress", help="Compress an image using using svd or pca"
     )
-    compress_image.add_argument("image_path", type=str, help="the file path to the image you want to compress")
+    compress_image.add_argument(
+        "image_path", type=str, help="the file path to the image you want to compress"
+    )
+    compress_image.add_argument(
+        "compression_level",
+        type=int,
+        help="Choose a compression level between 1 and 100 for your image",
+        default=0,
+    )
+    compress_mutually_exclusiv = compress_image.add_mutually_exclusive_group()
+    compress_mutually_exclusiv.add_argument(
+        "-s",
+        "--svd",
+        action="store_true",
+        help="compress an image using svd",
+        default=False,
+    )
+    compress_mutually_exclusiv.add_argument(
+        "-p",
+        "--pca",
+        action="store_true",
+        help="compress an image using pca",
+        default=False,
+    )
+    # pca_compressor.add_argument("image_path", type=str, help="the file path to the image you want to compress")
+    # pca_compressor.add_argument("compression_level", type=int, help="Choose a compression level between 1 and 100 for your image", default=0)
 
     args = parser.parse_args()
+    print(args.commands)
     if args.commands == "convert":
         length = len(args.file_paths)
 
@@ -389,7 +413,11 @@ def personal():
     elif args.commands == "scrape":
         scraper.scrape()
     elif args.commands == "compress":
-        compress.compress(args.image_path)
+        if args.svd:
+            compress.svd_compress(args.image_path, args.compression_level)
+        elif args.pca:
+            compress.pca_compress(args.image_path, args.compression_level)
+    # elif args.commands == ""
 
 
 if __name__ == "__main__":
