@@ -347,27 +347,27 @@ def personal():
     compress_image.add_argument(
         "image_path", type=str, help="the file path to the image you want to compress"
     )
-    compress_image.add_argument(
-        "compression_level",
-        type=int,
-        help="Choose a compression level between 1 and 100 for your image",
-        default=0,
-    )
-    compress_mutually_exclusiv = compress_image.add_mutually_exclusive_group()
-    compress_mutually_exclusiv.add_argument(
-        "-s",
-        "--svd",
-        action="store_true",
-        help="compress an image using svd",
-        default=False,
-    )
-    compress_mutually_exclusiv.add_argument(
-        "-p",
-        "--pca",
-        action="store_true",
-        help="compress an image using pca",
-        default=False,
-    )
+    # compress_image.add_argument(
+    #     "compression_level",
+    #     type=int,
+    #     help="Choose a compression level between 1 and 100 for your image",
+    #     default=0,
+    # )
+    # compress_mutually_exclusiv = compress_image.add_mutually_exclusive_group()
+    # compress_mutually_exclusiv.add_argument(
+    #     "-s",
+    #     "--svd",
+    #     action="store_true",
+    #     help="compress an image using svd",
+    #     default=False,
+    # )
+    # compress_mutually_exclusiv.add_argument(
+    #     "-p",
+    #     "--pca",
+    #     action="store_true",
+    #     help="compress an image using pca",
+    #     default=False,
+    # )
     # pca_compressor.add_argument("image_path", type=str, help="the file path to the image you want to compress")
     # pca_compressor.add_argument("compression_level", type=int, help="Choose a compression level between 1 and 100 for your image", default=0)
 
@@ -413,10 +413,10 @@ def personal():
     elif args.commands == "scrape":
         scraper.scrape()
     elif args.commands == "compress":
-        if args.svd:
-            compress.svd_compress(args.image_path, args.compression_level)
-        elif args.pca:
-            compress.pca_compress(args.image_path, args.compression_level)
+        compress.dct_compress(args.image_path,)
+        # if args.svd:
+        # elif args.pca:
+        #     compress.pca_compress(args.image_path, args.compression_level)
     # elif args.commands == ""
 
 
