@@ -1,2 +1,2 @@
 @echo off
-python C:\Users\rejil\Documents\GitHub\Personal-CLI\main.py %*
+python C:\Users\rejil\OneDrive\Documents\GitHub\Personal-CLI\main.py %*
